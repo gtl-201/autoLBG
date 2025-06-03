@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Báo Giảng</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Lịch Báo Giảng</h1>
+        
+        <form id="excelForm">
+            <div class="form-group">
+                <label for="lichBaoGiang">📅 Chọn file Lịch Báo Giảng (.xlsx):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="lichBaoGiang" class="file-input" accept=".xlsx,.xls" required>
+                    <label for="lichBaoGiang" class="file-input-label">
+                        <span class="icon">📁</span>
+                        Chọn file Lịch Báo Giảng
+                    </label>
+                </div>
+                <div class="file-name" id="lichBaoGiangName">Chưa chọn file</div>
+            </div>
+
+            <div class="form-group">
+                <label for="noiDung">📚 Chọn file Nội Dung (.xlsx):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="noiDung" class="file-input" accept=".xlsx,.xls" required>
+                    <label for="noiDung" class="file-input-label">
+                        <span class="icon">📁</span>
+                        Chọn file Nội Dung
+                    </label>
+                </div>
+                <div class="file-name" id="noiDungName">Chưa chọn file</div>
+            </div>
+
+            <div class="form-group">
+                <label for="outputName">💾 Tên file xuất ra:</label>
+                <input type="text" id="outputName" placeholder="Nhập tên file (không cần đuôi .xlsx)" value="" required>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span class="icon">⚡</span>
+                    Xử Lý và Tải File
+                </button>
+            </div>
+        </form>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        // Xử lý hiển thị tên file
+        document.getElementById('lichBaoGiang').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Chưa chọn file';
+            document.getElementById('lichBaoGiangName').textContent = fileName;
+        });
+
+        document.getElementById('noiDung').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Chưa chọn file';
+            document.getElementById('noiDungName').textContent = fileName;
+        });
+
+        // Xử lý form submit
+        document.getElementById('excelForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const lichBaoGiangFile = document.getElementById('lichBaoGiang').files[0];
+            const noiDungFile = document.getElementById('noiDung').files[0];
+            const outputName = document.getElementById('outputName').value.trim();
+            
+            if (!lichBaoGiangFile || !noiDungFile || !outputName) {
+                showStatus('Vui lòng chọn đầy đủ các file và nhập tên file xuất ra!', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Đang xử lý file...', 'processing');
+                showProgress(0);
+                
+                // Đọc file nội dung
+                const noiDungData = await readExcelFile(noiDungFile);
+                showProgress(30);
+                
+                // Đọc file lịch báo giảng  
+                const lichBaoGiangWorkbook = await readExcelFileWithFormat(lichBaoGiangFile);
+                showProgress(60);
+                
+                // Xử lý dữ liệu - Logic giống Python
+                await processDataLikePython(noiDungData, lichBaoGiangWorkbook);
+                showProgress(90);
+                
+                // Tạo và tải file
+                await downloadExcelFile(lichBaoGiangWorkbook, outputName);
+                showProgress(100);
+                
+                showStatus('✅ Xử lý hoàn thành! File đã được tải xuống.', 'success');
+                
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showStatus('❌ Có lỗi xảy ra: ' + error.message, 'error');
+            }
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            if (type === 'processing') {
+                document.getElementById('progressBar').style.display = 'block';
+            } else {
+                setTimeout(() => {
+                    document.getElementById('progressBar').style.display = 'none';
+                }, 1000);
+            }
+        }
+
+        function showProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        // Đọc file nội dung với ExcelJS
+        async function readExcelFile(file) {
+            const workbook = new ExcelJS.Workbook();
+            const arrayBuffer = await file.arrayBuffer();
+            await workbook.xlsx.load(arrayBuffer);
+            
+            const noiDungData = {};
+            
+            // Đọc dữ liệu từ mỗi sheet trong file nội dung
+            workbook.worksheets.forEach(sheet => {
+                const sheetName = sheet.name;
+                const data = {};
+                
+                // Duyệt qua từng dòng bắt đầu từ dòng 2
+                sheet.eachRow((row, rowNumber) => {
+                    if (rowNumber >= 2) { // Bắt đầu từ dòng 2
+                        const tiet = row.getCell(2).value; // Cột B
+                        const tenBai = row.getCell(3).value; // Cột C
+                        
+                        if (tiet !== null && tiet !== undefined && 
+                            tenBai !== null && tenBai !== undefined) {
+                            data[tiet] = String(tenBai);
+                        }
+                    }
+                });
+                
+                noiDungData[sheetName] = data;
+            });
+            
+            return noiDungData;
+        }
+
+        // Đọc file lịch báo giảng với ExcelJS để giữ định dạng
+        async function readExcelFileWithFormat(file) {
+            const workbook = new ExcelJS.Workbook();
+            const arrayBuffer = await file.arrayBuffer();
+            await workbook.xlsx.load(arrayBuffer);
+            return workbook;
+        }
+
+        // Xử lý dữ liệu theo logic Python
+        async function processDataLikePython(noiDungData, lichBaoGiangWorkbook) {
+            const classLastPeriod = {}; // Lưu số tiết cuối cùng của từng lớp
+            
+            // Xử lý từng sheet trong file lịch báo giảng
+            lichBaoGiangWorkbook.worksheets.forEach(sheet => {
+                const sheetName = sheet.name;
+                
+                // Duyệt qua từng dòng trong sheet bắt đầu từ dòng 4
+                sheet.eachRow((row, rowNumber) => {
+                    if (rowNumber >= 4) { // Bắt đầu từ dòng 4
+                        const monHocCell = row.getCell(4); // Cột D: Môn học
+                        const lopCell = row.getCell(5); // Cột E: Lớp
+                        const tietCell = row.getCell(6); // Cột F: Tiết thứ theo PPCT
+                        const baiCell = row.getCell(7); // Cột G: Tên bài giảng
+                        
+                        // Nếu có dữ liệu lớp (không phải ô trống)
+                        if (lopCell.value !== null && lopCell.value !== undefined) {
+                            const lop = String(lopCell.value).trim();
+                            
+                            // Xác định khối lớp từ tên lớp (10, 11, 12)
+                            const khoi = lop.substring(0, 2); // Lấy 2 ký tự đầu tiên
+                            if (!["10", "11", "12"].includes(khoi)) {
+                                return; // Bỏ qua nếu không phải lớp hợp lệ
+                            }
+
+                            // Kiểm tra môn học trong cột D
+                            let isLuyenTap = false;
+                            if (monHocCell.value !== null && monHocCell.value !== undefined) {
+                                const monHoc = String(monHocCell.value).trim();
+                                // Kiểm tra 3 ký tự cuối có phải là "***" không
+                                if (monHoc.length >= 3 && monHoc.slice(-3) === "***") {
+                                    isLuyenTap = true;
+                                    // Xóa "***" ở cuối và cập nhật lại ô
+                                    const monHocSauKhiXoa = monHoc.slice(0, -3).trim();
+                                    monHocCell.value = monHocSauKhiXoa;
+                                }
+                            }
+
+                            if (isLuyenTap) {
+                                // Nếu có "***" ở cuối môn học
+                                tietCell.value = "TC"; // Cột F điền "TC"
+                                baiCell.value = "Luyện tập"; // Cột G điền "Luyện tập"
+                            } else {
+                                // Xử lý bình thường
+                                // Tăng số tiết cho từng lớp
+                                if (!classLastPeriod[lop]) {
+                                    classLastPeriod[lop] = 1;
+                                } else {
+                                    classLastPeriod[lop] += 1;
+                                }
+                                
+                                // Điền số tiết vào cột F
+                                const tietHienTai = classLastPeriod[lop];
+                                tietCell.value = tietHienTai;
+                                
+                                // Tra cứu tên bài học trong sheet tương ứng với khối lớp
+                                let tenBai;
+                                if (noiDungData[khoi] && noiDungData[khoi][tietHienTai]) {
+                                    tenBai = noiDungData[khoi][tietHienTai];
+                                } else {
+                                    tenBai = "Không có dữ liệu";
+                                }
+                                
+                                baiCell.value = tenBai;
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Tạo và tải file Excel với ExcelJS
+        async function downloadExcelFile(workbook, fileName) {
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName.endsWith('.xlsx') ? fileName : fileName + '.xlsx';
+            a.style.display = 'none';
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
