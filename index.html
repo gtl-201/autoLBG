@@ -39,7 +39,7 @@
             </div>
         </button>
 
-         <button class="function-card" onclick="navigateToTestplatform()">
+         <!-- <button class="function-card" onclick="navigateToTestplatform()">
             <div class="card-content">
                 <div class="card-icon">🎓</div>
                 <div class="card-text">
@@ -48,7 +48,7 @@
                 </div>
                 <div class="arrow-icon">→</div>
             </div>
-        </button>
+        </button> -->
     </div>
 
     <div class="loading" id="loading">
@@ -69,9 +69,7 @@
             
             // Simulate navigation delay
             setTimeout(() => {
-                // Thay thế URL này bằng trang TKB thực tế của bạn
                 window.location.href = '/tkb.html';
-                // Hoặc nếu đây là SPA: history.pushState({}, '', '/tkb');
                 hideLoading();
             }, 100);
         }
@@ -81,22 +79,20 @@
             
             // Simulate navigation delay  
             setTimeout(() => {
-                // Link đến file lich-bao-giang.html ở cùng thư mục
                 window.location.href = 'lich-bao-giang.html';
                 hideLoading();
             }, 100);
         }
 
-        function navigateToTestplatform() {
-            showLoading();
+        // function navigateToTestplatform() {
+        //     showLoading();
             
-            // Simulate navigation delay  
-            setTimeout(() => {
-                // Link đến file lich-bao-giang.html ở cùng thư mục
-                window.location.href = 'lbg-test-platform.html';
-                hideLoading();
-            }, 100);
-        }
+        //     // Simulate navigation delay  
+        //     setTimeout(() => {
+        //         window.location.href = 'lbg-test-platform.html';
+        //         hideLoading();
+        //     }, 100);
+        // }
 
         // Add keyboard navigation
         document.addEventListener('keydown', function(e) {

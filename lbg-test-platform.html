@@ -5,177 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lịch Báo Giảng</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-            font-size: 1.1em;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-input {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .file-input-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .file-input-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .file-input-label .icon {
-            margin-right: 10px;
-            font-size: 1.2em;
-        }
-
-        .file-name {
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            font-style: italic;
-            color: #666;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .submit-btn .icon {
-            margin-right: 10px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #f0f0f0;
-            border-radius: 4px;
-            margin: 20px 0;
-            overflow: hidden;
-            display: none;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .status {
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-weight: 500;
-            text-align: center;
-            display: none;
-        }
-
-        .status.processing {
-            background: #e3f2fd;
-            color: #1565c0;
-            border: 1px solid #bbdefb;
-        }
-
-        .status.success {
-            background: #e8f5e8;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
-        }
-
-        .status.error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
@@ -255,15 +85,15 @@
                 showStatus('Đang xử lý file...', 'processing');
                 showProgress(0);
                 
-                // Đọc file nội dung - sử dụng cách tương tự tkb.html
-                const noiDungData = await readNoiDungFile(noiDungFile);
+                // Đọc file nội dung
+                const noiDungData = await readExcelFile(noiDungFile);
                 showProgress(30);
                 
-                // Đọc file lịch báo giảng - sử dụng cách tương tự tkb.html
-                const lichBaoGiangWorkbook = await readExcelFile(lichBaoGiangFile);
+                // Đọc file lịch báo giảng  
+                const lichBaoGiangWorkbook = await readExcelFileWithFormat(lichBaoGiangFile);
                 showProgress(60);
                 
-                // Xử lý dữ liệu
+                // Xử lý dữ liệu - Logic giống Python
                 await processDataLikePython(noiDungData, lichBaoGiangWorkbook);
                 showProgress(90);
                 
@@ -298,17 +128,12 @@
             document.getElementById('progressFill').style.width = percent + '%';
         }
 
-        // Đọc file Excel - sử dụng cùng cách với tkb.html
+        // Đọc file nội dung với ExcelJS
         async function readExcelFile(file) {
             const workbook = new ExcelJS.Workbook();
             const arrayBuffer = await file.arrayBuffer();
             await workbook.xlsx.load(arrayBuffer);
-            return workbook;
-        }
-
-        // Đọc file nội dung - tối ưu hóa theo cách của tkb.html
-        async function readNoiDungFile(file) {
-            const workbook = await readExcelFile(file);
+            
             const noiDungData = {};
             
             // Đọc dữ liệu từ mỗi sheet trong file nội dung
@@ -316,50 +141,40 @@
                 const sheetName = sheet.name;
                 const data = {};
                 
-                console.log(`Đang đọc sheet: ${sheetName}`);
-                
                 // Duyệt qua từng dòng bắt đầu từ dòng 2
                 sheet.eachRow((row, rowNumber) => {
                     if (rowNumber >= 2) { // Bắt đầu từ dòng 2
-                        const tietCell = row.getCell(2); // Cột B
-                        const tenBaiCell = row.getCell(3); // Cột C
-                        
-                        const tiet = tietCell.value;
-                        const tenBai = tenBaiCell.value;
+                        const tiet = row.getCell(2).value; // Cột B
+                        const tenBai = row.getCell(3).value; // Cột C
                         
                         if (tiet !== null && tiet !== undefined && 
                             tenBai !== null && tenBai !== undefined) {
-                            // Chuyển đổi giá trị thành string để đảm bảo tính nhất quán
-                            const tietStr = String(tiet).trim();
-                            const tenBaiStr = String(tenBai).trim();
-                            
-                            if (tietStr && tenBaiStr) {
-                                data[tietStr] = tenBaiStr;
-                                console.log(`Sheet ${sheetName} - Tiết ${tietStr}: ${tenBaiStr}`);
-                            }
+                            data[tiet] = String(tenBai);
                         }
                     }
                 });
                 
                 noiDungData[sheetName] = data;
-                console.log(`Đã đọc ${Object.keys(data).length} tiết từ sheet ${sheetName}`);
             });
             
             return noiDungData;
         }
 
-        // Xử lý dữ liệu theo logic Python - cải tiến với error handling tốt hơn
+        // Đọc file lịch báo giảng với ExcelJS để giữ định dạng
+        async function readExcelFileWithFormat(file) {
+            const workbook = new ExcelJS.Workbook();
+            const arrayBuffer = await file.arrayBuffer();
+            await workbook.xlsx.load(arrayBuffer);
+            return workbook;
+        }
+
+        // Xử lý dữ liệu theo logic Python
         async function processDataLikePython(noiDungData, lichBaoGiangWorkbook) {
             const classLastPeriod = {}; // Lưu số tiết cuối cùng của từng lớp
-            let processedRows = 0;
-            
-            console.log('Bắt đầu xử lý dữ liệu...');
-            console.log('Dữ liệu nội dung:', noiDungData);
             
             // Xử lý từng sheet trong file lịch báo giảng
-            lichBaoGiangWorkbook.worksheets.forEach((sheet, sheetIndex) => {
+            lichBaoGiangWorkbook.worksheets.forEach(sheet => {
                 const sheetName = sheet.name;
-                console.log(`Đang xử lý sheet: ${sheetName}`);
                 
                 // Duyệt qua từng dòng trong sheet bắt đầu từ dòng 4
                 sheet.eachRow((row, rowNumber) => {
@@ -371,68 +186,61 @@
                         
                         // Nếu có dữ liệu lớp (không phải ô trống)
                         if (lopCell.value !== null && lopCell.value !== undefined) {
-                            const lopValue = String(lopCell.value).trim();
+                            const lop = String(lopCell.value).trim();
                             
-                            if (lopValue) {
-                                // Xác định khối lớp từ tên lớp (10, 11, 12)
-                                const khoi = lopValue.substring(0, 2); // Lấy 2 ký tự đầu tiên
-                                
-                                if (["10", "11", "12"].includes(khoi)) {
-                                    // Kiểm tra môn học trong cột D
-                                    let isLuyenTap = false;
-                                    if (monHocCell.value !== null && monHocCell.value !== undefined) {
-                                        const monHoc = String(monHocCell.value).trim();
-                                        // Kiểm tra 3 ký tự cuối có phải là "***" không
-                                        if (monHoc.length >= 3 && monHoc.slice(-3) === "***") {
-                                            isLuyenTap = true;
-                                            // Xóa "***" ở cuối và cập nhật lại ô
-                                            const monHocSauKhiXoa = monHoc.slice(0, -3).trim();
-                                            monHocCell.value = monHocSauKhiXoa;
-                                            console.log(`Xử lý luyện tập cho lớp ${lopValue}`);
-                                        }
-                                    }
+                            // Xác định khối lớp từ tên lớp (10, 11, 12)
+                            const khoi = lop.substring(0, 2); // Lấy 2 ký tự đầu tiên
+                            if (!["10", "11", "12"].includes(khoi)) {
+                                return; // Bỏ qua nếu không phải lớp hợp lệ
+                            }
 
-                                    if (isLuyenTap) {
-                                        // Nếu có "***" ở cuối môn học
-                                        tietCell.value = "TC"; // Cột F điền "TC"
-                                        baiCell.value = "Luyện tập"; // Cột G điền "Luyện tập"
-                                        console.log(`Lớp ${lopValue}: Luyện tập`);
-                                    } else {
-                                        // Xử lý bình thường
-                                        // Tăng số tiết cho từng lớp
-                                        if (!classLastPeriod[lopValue]) {
-                                            classLastPeriod[lopValue] = 1;
-                                        } else {
-                                            classLastPeriod[lopValue] += 1;
-                                        }
-                                        
-                                        // Điền số tiết vào cột F
-                                        const tietHienTai = classLastPeriod[lopValue];
-                                        tietCell.value = tietHienTai;
-                                        
-                                        // Tra cứu tên bài học trong sheet tương ứng với khối lớp
-                                        let tenBai = "Không có dữ liệu";
-                                        
-                                        if (noiDungData[khoi] && noiDungData[khoi][String(tietHienTai)]) {
-                                            tenBai = noiDungData[khoi][String(tietHienTai)];
-                                        }
-                                        
-                                        baiCell.value = tenBai;
-                                        console.log(`Lớp ${lopValue} - Tiết ${tietHienTai}: ${tenBai}`);
-                                        processedRows++;
-                                    }
+                            // Kiểm tra môn học trong cột D
+                            let isLuyenTap = false;
+                            if (monHocCell.value !== null && monHocCell.value !== undefined) {
+                                const monHoc = String(monHocCell.value).trim();
+                                // Kiểm tra 3 ký tự cuối có phải là "***" không
+                                if (monHoc.length >= 3 && monHoc.slice(-3) === "***") {
+                                    isLuyenTap = true;
+                                    // Xóa "***" ở cuối và cập nhật lại ô
+                                    const monHocSauKhiXoa = monHoc.slice(0, -3).trim();
+                                    monHocCell.value = monHocSauKhiXoa;
                                 }
+                            }
+
+                            if (isLuyenTap) {
+                                // Nếu có "***" ở cuối môn học
+                                tietCell.value = "TC"; // Cột F điền "TC"
+                                baiCell.value = "Luyện tập"; // Cột G điền "Luyện tập"
+                            } else {
+                                // Xử lý bình thường
+                                // Tăng số tiết cho từng lớp
+                                if (!classLastPeriod[lop]) {
+                                    classLastPeriod[lop] = 1;
+                                } else {
+                                    classLastPeriod[lop] += 1;
+                                }
+                                
+                                // Điền số tiết vào cột F
+                                const tietHienTai = classLastPeriod[lop];
+                                tietCell.value = tietHienTai;
+                                
+                                // Tra cứu tên bài học trong sheet tương ứng với khối lớp
+                                let tenBai;
+                                if (noiDungData[khoi] && noiDungData[khoi][tietHienTai]) {
+                                    tenBai = noiDungData[khoi][tietHienTai];
+                                } else {
+                                    tenBai = "Không có dữ liệu";
+                                }
+                                
+                                baiCell.value = tenBai;
                             }
                         }
                     }
                 });
             });
-            
-            console.log(`Đã xử lý ${processedRows} dòng dữ liệu`);
-            console.log('Trạng thái lớp:', classLastPeriod);
         }
 
-        // Tạo và tải file Excel - sử dụng cùng cách với tkb.html
+        // Tạo và tải file Excel với ExcelJS
         async function downloadExcelFile(workbook, fileName) {
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { 
