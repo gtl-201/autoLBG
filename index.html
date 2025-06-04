@@ -38,6 +38,17 @@
                 <div class="arrow-icon">→</div>
             </div>
         </button>
+
+         <button class="function-card" onclick="navigateToTestplatform()">
+            <div class="card-content">
+                <div class="card-icon">🎓</div>
+                <div class="card-text">
+                    <div class="card-title">Test platform</div>
+                    <div class="card-description">Tự động tạo và điền lịch báo giảng từ dữ liệu</div>
+                </div>
+                <div class="arrow-icon">→</div>
+            </div>
+        </button>
     </div>
 
     <div class="loading" id="loading">
@@ -62,7 +73,7 @@
                 window.location.href = '/tkb.html';
                 // Hoặc nếu đây là SPA: history.pushState({}, '', '/tkb');
                 hideLoading();
-            }, 500);
+            }, 100);
         }
 
         function navigateToLichBaoGiang() {
@@ -73,7 +84,18 @@
                 // Link đến file lich-bao-giang.html ở cùng thư mục
                 window.location.href = 'lich-bao-giang.html';
                 hideLoading();
-            }, 500);
+            }, 100);
+        }
+
+        function navigateToTestplatform() {
+            showLoading();
+            
+            // Simulate navigation delay  
+            setTimeout(() => {
+                // Link đến file lich-bao-giang.html ở cùng thư mục
+                window.location.href = 'lbg-test-platform.html';
+                hideLoading();
+            }, 100);
         }
 
         // Add keyboard navigation
