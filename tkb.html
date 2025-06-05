@@ -9,16 +9,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📋 Sao Chép Nội Dung Trang Tính</h1>
-        
-        <!-- <div class="info-box">
-            <h3>📝 Chức năng:</h3>
-            <ul>
-                <li>Sao chép nội dung từ ô D4:E63 của trang tính thứ 3</li>
-                <li>Dán vào tất cả các trang tính sau nó (từ trang tính thứ 4 trở đi)</li>
-                <li>Giữ nguyên định dạng của file gốc</li>
-            </ul>
-        </div> -->
+        <h1>THỜI KHOÁ BIỂU TỰ ĐỘNG</h1>
         
         <form id="excelForm">
             <div class="form-group">
@@ -31,6 +22,14 @@
                     </label>
                 </div>
                 <div class="file-name" id="inputFileName">Chưa chọn file</div>
+            </div>
+
+            <div class="form-group">
+                <label for="rangeSelect">📊 Chọn vùng ô cần sao chép:</label>
+                <select id="rangeSelect" class="range-select" required>
+                    <option value="D4:E63">TKB cho Lịch Báo Giảng</option>
+                    <option value="C6:M51">TKB cho Sổ Đầu Bài</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -53,6 +52,8 @@
         <div class="status" id="status"></div>
     </div>
 
+
+
     <script>
         // Xử lý hiển thị tên file
         document.getElementById('inputFile').addEventListener('change', function(e) {
@@ -66,6 +67,7 @@
             
             const inputFile = document.getElementById('inputFile').files[0];
             const outputName = document.getElementById('outputName').value.trim();
+            const selectedRange = document.getElementById('rangeSelect').value;
             
             if (!inputFile || !outputName) {
                 showStatus('Vui lòng chọn file và nhập tên file xuất ra!', 'error');
@@ -85,8 +87,8 @@
                     throw new Error('File phải có ít nhất 3 trang tính');
                 }
                 
-                // Sao chép nội dung
-                await copySheetContent(workbook);
+                // Sao chép nội dung với vùng đã chọn
+                await copySheetContent(workbook, selectedRange);
                 showProgress(80);
                 
                 // Tạo và tải file
@@ -128,57 +130,118 @@
             return workbook;
         }
 
-        // Sao chép nội dung từ trang tính thứ 3 sang các trang tính sau
-        async function copySheetContent(workbook) {
+        // Phân tích vùng ô
+        function parseRange(range) {
+            const [start, end] = range.split(':');
+            
+            // Phân tích ô bắt đầu
+            const startMatch = start.match(/([A-Z]+)(\d+)/);
+            const startCol = startMatch[1];
+            const startRow = parseInt(startMatch[2]);
+            
+            // Phân tích ô kết thúc
+            const endMatch = end.match(/([A-Z]+)(\d+)/);
+            const endCol = endMatch[1];
+            const endRow = parseInt(endMatch[2]);
+            
+            return { startCol, startRow, endCol, endRow };
+        }
+
+        // Chuyển đổi chữ cái cột thành số
+        function columnToNumber(column) {
+            let result = 0;
+            for (let i = 0; i < column.length; i++) {
+                result = result * 26 + (column.charCodeAt(i) - 64);
+            }
+            return result;
+        }
+
+        // Chuyển đổi số thành chữ cái cột
+        function numberToColumn(num) {
+            let result = '';
+            while (num > 0) {
+                num--; // Adjust for 1-based indexing
+                result = String.fromCharCode(65 + (num % 26)) + result;
+                num = Math.floor(num / 26);
+            }
+            return result;
+        }
+
+        // Sao chép nội dung từ trang tính nguồn sang các trang tính sau
+        async function copySheetContent(workbook, selectedRange) {
             const sheets = workbook.worksheets;
             
-            if (sheets.length < 3) {
-                throw new Error('File phải có ít nhất 3 trang tính');
+            // Xác định sheet nguồn và sheet đích dựa trên vùng ô
+            let sourceSheetIndex;
+            let minRequiredSheets;
+            let targetStartIndex;
+            
+            if (selectedRange === 'D4:E63') {
+                sourceSheetIndex = 2; // Sheet thứ 3 (index 2)
+                minRequiredSheets = 3; // Cần ít nhất 3 sheet
+                targetStartIndex = 3; // Sao chép từ sheet thứ 4 trở đi
+            } else if (selectedRange === 'C6:M51') {
+                sourceSheetIndex = 1; // Sheet thứ 2 (index 1)
+                minRequiredSheets = 2; // Cần ít nhất 2 sheet
+                targetStartIndex = 2; // Sao chép từ sheet thứ 3 trở đi
+            } else {
+                throw new Error('Vùng ô không được hỗ trợ');
             }
             
-            // Lấy trang tính thứ 3 (index = 2)
-            const sourceSheet = sheets[2];
-            console.log(`Trang tính nguồn: ${sourceSheet.name}`);
+            if (sheets.length < minRequiredSheets) {
+                throw new Error(`File phải có ít nhất ${minRequiredSheets} trang tính`);
+            }
             
-            // Lưu trữ dữ liệu và định dạng từ vùng D4:E63
+            // Lấy trang tính nguồn
+            const sourceSheet = sheets[sourceSheetIndex];
+            console.log(`Trang tính nguồn: ${sourceSheet.name} (sheet thứ ${sourceSheetIndex + 1})`);
+            console.log(`Vùng sao chép: ${selectedRange}`);
+            
+            // Phân tích vùng ô
+            const { startCol, startRow, endCol, endRow } = parseRange(selectedRange);
+            const startColNum = columnToNumber(startCol);
+            const endColNum = columnToNumber(endCol);
+            
+            // Lưu trữ dữ liệu và định dạng từ vùng đã chọn
             const sourceData = [];
             
-            // Đọc dữ liệu từ D4 đến E63 (60 dòng)
-            for (let row = 4; row <= 63; row++) {
-                const rowData = {
-                    colD: {
-                        value: sourceSheet.getCell(`D${row}`).value,
-                        style: Object.assign({}, sourceSheet.getCell(`D${row}`).style)
-                    },
-                    colE: {
-                        value: sourceSheet.getCell(`E${row}`).value,
-                        style: Object.assign({}, sourceSheet.getCell(`E${row}`).style)
-                    }
-                };
+            // Đọc dữ liệu từ vùng đã chọn
+            for (let row = startRow; row <= endRow; row++) {
+                const rowData = {};
+                for (let colNum = startColNum; colNum <= endColNum; colNum++) {
+                    const colLetter = numberToColumn(colNum);
+                    const cellAddress = `${colLetter}${row}`;
+                    
+                    rowData[colLetter] = {
+                        value: sourceSheet.getCell(cellAddress).value,
+                        style: Object.assign({}, sourceSheet.getCell(cellAddress).style)
+                    };
+                }
                 sourceData.push(rowData);
             }
             
             console.log(`Đã đọc ${sourceData.length} dòng từ trang tính nguồn`);
             
-            // Sao chép sang các trang tính từ thứ 4 trở đi
+            // Sao chép sang các trang tính đích
             let copiedSheets = 0;
-            for (let i = 3; i < sheets.length; i++) {
+            for (let i = targetStartIndex; i < sheets.length; i++) {
                 const targetSheet = sheets[i];
                 console.log(`Đang sao chép sang trang tính: ${targetSheet.name}`);
                 
-                // Dán dữ liệu vào vùng D4:E63
-                for (let row = 0; row < sourceData.length; row++) {
-                    const targetRow = row + 4; // Bắt đầu từ dòng 4
+                // Dán dữ liệu vào vùng tương ứng
+                for (let rowIndex = 0; rowIndex < sourceData.length; rowIndex++) {
+                    const targetRow = rowIndex + startRow;
+                    const rowData = sourceData[rowIndex];
                     
-                    // Sao chép cột D
-                    const targetCellD = targetSheet.getCell(`D${targetRow}`);
-                    targetCellD.value = sourceData[row].colD.value;
-                    targetCellD.style = sourceData[row].colD.style;
-                    
-                    // Sao chép cột E
-                    const targetCellE = targetSheet.getCell(`E${targetRow}`);
-                    targetCellE.value = sourceData[row].colE.value;
-                    targetCellE.style = sourceData[row].colE.style;
+                    // Sao chép từng ô trong dòng
+                    for (let colNum = startColNum; colNum <= endColNum; colNum++) {
+                        const colLetter = numberToColumn(colNum);
+                        const cellAddress = `${colLetter}${targetRow}`;
+                        
+                        const targetCell = targetSheet.getCell(cellAddress);
+                        targetCell.value = rowData[colLetter].value;
+                        targetCell.style = rowData[colLetter].style;
+                    }
                 }
                 
                 copiedSheets++;
@@ -190,7 +253,8 @@
             showProgress(70);
             
             if (copiedSheets === 0) {
-                throw new Error('Không có trang tính nào để sao chép (cần ít nhất 4 trang tính)');
+                const minSheetsNeeded = targetStartIndex + 1;
+                throw new Error(`Không có trang tính nào để sao chép (cần ít nhất ${minSheetsNeeded} trang tính)`);
             }
         }
 
