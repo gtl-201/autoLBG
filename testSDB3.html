@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xử Lý Sổ Đầu Bài</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1em;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .file-input-label .icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .submit-btn .icon {
+            margin-right: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .status.processing {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #bbdefb;
+        }
+
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .steps {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+
+        .steps h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .steps ol {
+            padding-left: 20px;
+        }
+
+        .steps li {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Xử Lý Sổ Đầu Bài</h1>
+        
+        <div class="steps">
+            <h3>📋 Quy trình hoạt động:</h3>
+            <ol>
+                <li><strong>Bước 1:</strong> Sao chép A1:Q52 từ file Buổi Chiều → T1:AJ52 của file Buổi Sáng (kèm định dạng)</li>
+                <li><strong>Bước 2:</strong> Điền số tiết PPCT vào cột D và W dựa trên nội dung môn học</li>
+                <li><strong>Bước 3:</strong> Cắt vùng T1:AJ52 thành file Buổi Chiều mới với đầy đủ định dạng</li>
+            </ol>
+            <div class="highlight">
+                <strong>⚠️ Lưu ý:</strong> Số tiết PPCT chỉ được điền từ hàng thứ 6 trở xuống (bỏ qua 5 hàng đầu tiên)
+            </div>
+        </div>
+        
+        <form id="excelForm">
+            <div class="form-group">
+                <label for="buoiSang">🌅 Chọn file Sổ Đầu Bài Buổi Sáng (.xlsx):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="buoiSang" class="file-input" accept=".xlsx,.xls" required>
+                    <label for="buoiSang" class="file-input-label">
+                        <span class="icon">📁</span>
+                        Chọn file Buổi Sáng
+                    </label>
+                </div>
+                <div class="file-name" id="buoiSangName">Chưa chọn file</div>
+            </div>
+
+            <div class="form-group">
+                <label for="buoiChieu">🌆 Chọn file Sổ Đầu Bài Buổi Chiều (.xlsx):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="buoiChieu" class="file-input" accept=".xlsx,.xls" required>
+                    <label for="buoiChieu" class="file-input-label">
+                        <span class="icon">📁</span>
+                        Chọn file Buổi Chiều
+                    </label>
+                </div>
+                <div class="file-name" id="buoiChieuName">Chưa chọn file</div>
+            </div>
+
+            <div class="form-group">
+                <label for="noiDung">📚 Chọn file Nội Dung Môn Học (.xlsx):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="noiDung" class="file-input" accept=".xlsx,.xls" required>
+                    <label for="noiDung" class="file-input-label">
+                        <span class="icon">📁</span>
+                        Chọn file Nội Dung
+                    </label>
+                </div>
+                <div class="file-name" id="noiDungName">Chưa chọn file</div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span class="icon">⚡</span>
+                    Xử Lý và Tải File
+                </button>
+            </div>
+        </form>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        // Xử lý hiển thị tên file
+        document.getElementById('buoiSang').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Chưa chọn file';
+            document.getElementById('buoiSangName').textContent = fileName;
+        });
+
+        document.getElementById('buoiChieu').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Chưa chọn file';
+            document.getElementById('buoiChieuName').textContent = fileName;
+        });
+
+        document.getElementById('noiDung').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Chưa chọn file';
+            document.getElementById('noiDungName').textContent = fileName;
+        });
+
+        // Xử lý form submit
+        document.getElementById('excelForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const buoiSangFile = document.getElementById('buoiSang').files[0];
+            const buoiChieuFile = document.getElementById('buoiChieu').files[0];
+            const noiDungFile = document.getElementById('noiDung').files[0];
+            
+            if (!buoiSangFile || !buoiChieuFile || !noiDungFile) {
+                showStatus('Vui lòng chọn đầy đủ các file!', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Đang xử lý file...', 'processing');
+                showProgress(0);
+                
+                // Đọc các file Excel
+                const buoiSangWorkbook = await readExcelFile(buoiSangFile);
+                showProgress(20);
+                
+                const buoiChieuWorkbook = await readExcelFile(buoiChieuFile);
+                showProgress(40);
+                
+                const noiDungWorkbook = await readExcelFile(noiDungFile);
+                showProgress(60);
+                
+                // Xử lý dữ liệu theo 3 bước
+                await processFiles(buoiSangWorkbook, buoiChieuWorkbook, noiDungWorkbook);
+                showProgress(80);
+                
+                // Tạo và tải file
+                await downloadProcessedFiles(buoiSangWorkbook, buoiChieuWorkbook);
+                showProgress(100);
+                
+                showStatus('✅ Xử lý hoàn thành! Các file đã được tải xuống.', 'success');
+                
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showStatus('❌ Có lỗi xảy ra: ' + error.message, 'error');
+            }
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            if (type === 'processing') {
+                document.getElementById('progressBar').style.display = 'block';
+            } else {
+                setTimeout(() => {
+                    document.getElementById('progressBar').style.display = 'none';
+                }, 1000);
+            }
+        }
+
+        function showProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        // Đọc file Excel
+        async function readExcelFile(file) {
+            const workbook = new ExcelJS.Workbook();
+            const arrayBuffer = await file.arrayBuffer();
+            await workbook.xlsx.load(arrayBuffer);
+            return workbook;
+        }
+
+        // Sao chép vùng ô với đầy đủ định dạng
+        function copyRangeWithFormat(sourceSheet, targetSheet, sourceRange, targetRange) {
+            const sourceStart = ExcelJS.addressToTileRef(sourceRange.split(':')[0]);
+            const sourceEnd = ExcelJS.addressToTileRef(sourceRange.split(':')[1]);
+            const targetStart = ExcelJS.addressToTileRef(targetRange.split(':')[0]);
+            
+            const rowOffset = targetStart.row - sourceStart.row;
+            const colOffset = targetStart.col - sourceStart.col;
+            
+            for (let row = sourceStart.row; row <= sourceEnd.row; row++) {
+                for (let col = sourceStart.col; col <= sourceEnd.col; col++) {
+                    const sourceCell = sourceSheet.getCell(row, col);
+                    const targetCell = targetSheet.getCell(row + rowOffset, col + colOffset);
+                    
+                    // Sao chép giá trị
+                    targetCell.value = sourceCell.value;
+                    
+                    // Sao chép định dạng
+                    if (sourceCell.style) {
+                        targetCell.style = JSON.parse(JSON.stringify(sourceCell.style));
+                    }
+                    
+                    // Sao chép công thức
+                    if (sourceCell.formula) {
+                        targetCell.formula = sourceCell.formula;
+                    }
+                }
+            }
+        }
+
+        // Hàm chuyển đổi địa chỉ ô sang tọa độ
+        function addressToTileRef(address) {
+            const match = address.match(/^([A-Z]+)(\d+)$/);
+            if (!match) throw new Error('Invalid cell address');
+            
+            const col = match[1];
+            const row = parseInt(match[2]);
+            
+            let colNum = 0;
+            for (let i = 0; i < col.length; i++) {
+                colNum = colNum * 26 + (col.charCodeAt(i) - 'A'.charCodeAt(0) + 1);
+            }
+            
+            return { row, col: colNum };
+        }
+
+        // Hàm chuyển đổi tọa độ sang địa chỉ ô
+        function tileRefToAddress(row, col) {
+            let colStr = '';
+            while (col > 0) {
+                col--;
+                colStr = String.fromCharCode('A'.charCodeAt(0) + (col % 26)) + colStr;
+                col = Math.floor(col / 26);
+            }
+            return colStr + row;
+        }
+
+        // Điền số tiết PPCT dựa trên môn học (liên tục qua các sheet và buổi) - BẮT ĐẦU TỪ HÀNG 6
+        function fillPeriodNumbers(sheet, subjectCol, periodCol, globalSubjectPeriods, startRow = 6, endRow = 52) {
+            console.log(`Điền số tiết PPCT từ hàng ${startRow} đến hàng ${endRow}`);
+            
+            for (let row = startRow; row <= endRow; row++) {
+                const subjectCell = sheet.getCell(row, subjectCol);
+                const periodCell = sheet.getCell(row, periodCol);
+                
+                if (subjectCell.value && subjectCell.value.toString().trim()) {
+                    const subject = subjectCell.value.toString().trim();
+                    
+                    // Tăng số tiết cho môn học này (liên tục qua các sheet)
+                    if (!globalSubjectPeriods[subject]) {
+                        globalSubjectPeriods[subject] = 1;
+                    } else {
+                        globalSubjectPeriods[subject]++;
+                    }
+                    
+                    // Điền số tiết vào ô
+                    periodCell.value = globalSubjectPeriods[subject];
+                    
+                    console.log(`Sheet: ${sheet.name}, Hàng: ${row}, Môn: ${subject}, Tiết: ${globalSubjectPeriods[subject]}, Cột: ${periodCol}`);
+                }
+            }
+        }
+
+        // Xử lý chính theo 3 bước
+        async function processFiles(buoiSangWorkbook, buoiChieuWorkbook, noiDungWorkbook) {
+            console.log('Bắt đầu xử lý 3 bước...');
+            
+            // Khởi tạo bộ đếm số tiết PPCT toàn cục cho từng môn học
+            const globalSubjectPeriods = {};
+            
+            // Xử lý từng sheet theo thứ tự
+            buoiSangWorkbook.worksheets.forEach((buoiSangSheet, index) => {
+                const buoiChieuSheet = buoiChieuWorkbook.worksheets[index];
+                
+                if (buoiChieuSheet) {
+                    console.log(`Đang xử lý sheet: ${buoiSangSheet.name}`);
+                    
+                    // Bước 1: Sao chép A1:Q52 từ Buổi Chiều → T1:AJ52 của Buổi Sáng
+                    console.log('Bước 1: Sao chép dữ liệu từ Buổi Chiều sang Buổi Sáng...');
+                    
+                    // Sao chép từng ô từ A1:Q52 sang T1:AJ52
+                    for (let row = 1; row <= 52; row++) {
+                        for (let col = 1; col <= 17; col++) { // A-Q = 1-17
+                            const sourceCell = buoiChieuSheet.getCell(row, col);
+                            const targetCell = buoiSangSheet.getCell(row, col + 19); // T = 20, nên offset = 19
+                            
+                            // Sao chép giá trị
+                            targetCell.value = sourceCell.value;
+                            
+                            // Sao chép định dạng
+                            if (sourceCell.style) {
+                                targetCell.style = JSON.parse(JSON.stringify(sourceCell.style));
+                            }
+                            
+                            // Sao chép công thức
+                            if (sourceCell.formula) {
+                                targetCell.formula = sourceCell.formula;
+                            }
+                        }
+                    }
+                    
+                    // Bước 2: Điền số tiết PPCT (liên tục qua các sheet và buổi) - BẮT ĐẦU TỪ HÀNG 6
+                    console.log('Bước 2: Điền số tiết PPCT từ hàng 6 trở xuống...');
+                    
+                    // Điền số tiết cho buổi sáng trước (cột D dựa trên cột C) - từ hàng 6
+                    fillPeriodNumbers(buoiSangSheet, 3, 4, globalSubjectPeriods, 6, 52);
+                    
+                    // Sau đó điền số tiết cho buổi chiều (cột W dựa trên cột V - đã copy sang T1:AJ52) - từ hàng 6
+                    fillPeriodNumbers(buoiSangSheet, 22, 23, globalSubjectPeriods, 6, 52);
+                    
+                    // Bước 3: Cắt vùng T1:AJ52 thành file Buổi Chiều mới
+                    console.log('Bước 3: Cắt dữ liệu từ T1:AJ52 sang file Buổi Chiều mới...');
+                    
+                    // Sao chép từ T1:AJ52 (cột 20-36) về A1:Q52 (cột 1-17) của Buổi Chiều
+                    for (let row = 1; row <= 52; row++) {
+                        for (let col = 1; col <= 17; col++) { // A-Q = 1-17
+                            const sourceCell = buoiSangSheet.getCell(row, col + 19); // T = 20, nên offset = 19
+                            const targetCell = buoiChieuSheet.getCell(row, col);
+                            
+                            // Sao chép giá trị
+                            targetCell.value = sourceCell.value;
+                            
+                            // Sao chép định dạng
+                            if (sourceCell.style) {
+                                targetCell.style = JSON.parse(JSON.stringify(sourceCell.style));
+                            }
+                            
+                            // Sao chép công thức
+                            if (sourceCell.formula) {
+                                targetCell.formula = sourceCell.formula;
+                            }
+                        }
+                    }
+                    
+                    // Xóa dữ liệu ở vùng T1:AJ52 của file Buổi Sáng
+                    for (let row = 1; row <= 52; row++) {
+                        for (let col = 20; col <= 36; col++) { // T-AJ = 20-36
+                            const cell = buoiSangSheet.getCell(row, col);
+                            cell.value = null;
+                            cell.style = {};
+                            cell.formula = null;
+                        }
+                    }
+                }
+            });
+            
+            console.log('Hoàn thành xử lý 3 bước!');
+            console.log('Tổng số tiết các môn học:', globalSubjectPeriods);
+        }
+
+        // Tạo và tải file Excel
+        async function downloadProcessedFiles(buoiSangWorkbook, buoiChieuWorkbook) {
+            // Tải file Buổi Sáng đã chỉnh sửa
+            const buoiSangBuffer = await buoiSangWorkbook.xlsx.writeBuffer();
+            const buoiSangBlob = new Blob([buoiSangBuffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            const buoiSangUrl = URL.createObjectURL(buoiSangBlob);
+            const buoiSangLink = document.createElement('a');
+            buoiSangLink.href = buoiSangUrl;
+            buoiSangLink.download = 'So Dau Bai Buoi Sang (Da chinh sua).xlsx';
+            buoiSangLink.style.display = 'none';
+            
+            document.body.appendChild(buoiSangLink);
+            buoiSangLink.click();
+            document.body.removeChild(buoiSangLink);
+            URL.revokeObjectURL(buoiSangUrl);
+            
+            // Tải file Buổi Chiều đã chỉnh sửa
+            setTimeout(async () => {
+                const buoiChieuBuffer = await buoiChieuWorkbook.xlsx.writeBuffer();
+                const buoiChieuBlob = new Blob([buoiChieuBuffer], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                
+                const buoiChieuUrl = URL.createObjectURL(buoiChieuBlob);
+                const buoiChieuLink = document.createElement('a');
+                buoiChieuLink.href = buoiChieuUrl;
+                buoiChieuLink.download = 'So Dau Bai Buoi Chieu (Da chinh sua).xlsx';
+                buoiChieuLink.style.display = 'none';
+                
+                document.body.appendChild(buoiChieuLink);
+                buoiChieuLink.click();
+                document.body.removeChild(buoiChieuLink);
+                URL.revokeObjectURL(buoiChieuUrl);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
