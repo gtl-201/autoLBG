@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Xử Lý Sổ Đầu Bài</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <link rel="stylesheet" href="sdb.css">
+    <link rel="stylesheet" href="sdb.css" />
   </head>
   <body>
     <div class="container">
@@ -327,7 +327,6 @@
         return noiDungData;
       }
 
-      // Điền nội dung môn học dựa trên số tiết
       function fillSubjectContent(
         sheet,
         subjectCol,
@@ -346,32 +345,46 @@
           const periodCell = sheet.getCell(row, periodCol);
           const contentCell = sheet.getCell(row, contentCol);
 
-          if (subjectCell.value && periodCell.value) {
+          // Kiểm tra có môn học hay không
+          if (subjectCell.value) {
             const subject = String(subjectCell.value).trim();
-            const period = String(periodCell.value).trim();
 
-            // Tìm sheet tương ứng với môn học
-            let tenBai = "Không có dữ liệu";
-
-            // Duyệt qua các sheet để tìm tên trung với môn học
-            for (const sheetName in noiDungData) {
-              if (
-                sheetName.toLowerCase().includes(subject.toLowerCase()) ||
-                subject.toLowerCase().includes(sheetName.toLowerCase())
-              ) {
-                // Tìm thấy sheet phù hợp, tra cứu nội dung theo số tiết
-                if (noiDungData[sheetName][period]) {
-                  tenBai = noiDungData[sheetName][period];
-                  console.log(
-                    `Tìm thấy: ${subject} - Tiết ${period} - ${tenBai}`
-                  );
-                  break;
-                }
-              }
+            // *** XỬ LÝ RIÊNG MÔN "CHÀO CỜ" TRƯỚC - KHÔNG CẦN SỐ TIẾT ***
+            if (subject.toLowerCase().includes("chào cờ")) {
+              contentCell.value = "Phổ biến nội dung tuần sau";
+              console.log(
+                `✅ Đã điền nội dung đặc biệt cho môn Chào cờ tại hàng ${row}: "Phổ biến nội dung tuần sau"`
+              );
+              continue; // Bỏ qua việc tra cứu trong noiDungData
             }
 
-            // Điền nội dung vào ô
-            contentCell.value = tenBai;
+            // Với các môn khác - CẦN CÓ SỐ TIẾT
+            if (periodCell.value) {
+              const period = String(periodCell.value).trim();
+
+              // Tìm sheet tương ứng với môn học
+              let tenBai = "Không có dữ liệu";
+
+              // Duyệt qua các sheet để tìm tên trùng với môn học
+              for (const sheetName in noiDungData) {
+                if (
+                  sheetName.toLowerCase().includes(subject.toLowerCase()) ||
+                  subject.toLowerCase().includes(sheetName.toLowerCase())
+                ) {
+                  // Tìm thấy sheet phù hợp, tra cứu nội dung theo số tiết
+                  if (noiDungData[sheetName][period]) {
+                    tenBai = noiDungData[sheetName][period];
+                    console.log(
+                      `Tìm thấy: ${subject} - Tiết ${period} - ${tenBai}`
+                    );
+                    break;
+                  }
+                }
+              }
+
+              // Điền nội dung vào ô
+              contentCell.value = tenBai;
+            }
           }
         }
       }
@@ -393,6 +406,12 @@
 
           if (subjectCell.value && subjectCell.value.toString().trim()) {
             const subject = subjectCell.value.toString().trim();
+
+            // *** THÊM ĐIỀU KIỆN NÀY: Bỏ qua môn "Chào cờ" ***
+            if (subject.toLowerCase().includes("chào cờ")) {
+              console.log(`Bỏ qua điền số tiết PPCT cho môn: ${subject}`);
+              continue; // Bỏ qua, không điền số tiết
+            }
 
             // Tăng số tiết cho môn học này (liên tục qua các sheet)
             if (!globalSubjectPeriods[subject]) {
