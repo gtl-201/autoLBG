@@ -39,7 +39,7 @@
             </div>
         </button>
 
-         <button class="function-card" onclick="navigateToTestplatform()">
+         <button class="function-card" onclick="navigateToSDB()">
             <div class="card-content">
                 <div class="card-icon">📖</div>
                 <div class="card-text">
@@ -69,7 +69,7 @@
             
             // Simulate navigation delay
             setTimeout(() => {
-                window.location.href = '/tkb.html';
+                window.location.href = 'tkb.html';
                 hideLoading();
             }, 100);
         }
@@ -84,7 +84,7 @@
             }, 100);
         }
 
-        function navigateToTestplatform() {
+        function navigateToSDB() {
             showLoading();
             
             // Simulate navigation delay  
@@ -100,6 +100,9 @@
                 navigateToTKB();
             } else if (e.key === '2') {
                 navigateToLichBaoGiang();
+            }
+            else if (e.key === '3') {
+                navigateToSDB();
             }
         });
     </script>

@@ -1,281 +1,342 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sao Chép Nội Dung Trang Tính</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <link rel="stylesheet" href="tkb.css">
-</head>
-<body>
+    <link rel="stylesheet" href="./tkb.css" />
+  </head>
+  <body>
     <div class="container">
-        <h1>THỜI KHOÁ BIỂU TỰ ĐỘNG</h1>
-        
-        <form id="excelForm">
-            <div class="form-group">
-                <label for="inputFile">📁 Chọn file Excel (.xlsx):</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="inputFile" class="file-input" accept=".xlsx,.xls" required>
-                    <label for="inputFile" class="file-input-label">
-                        <span class="icon">📁</span>
-                        Chọn file Excel
-                    </label>
-                </div>
-                <div class="file-name" id="inputFileName">Chưa chọn file</div>
-            </div>
+      <h1>THỜI KHOÁ BIỂU TỰ ĐỘNG</h1>
 
-            <div class="form-group">
-                <label for="rangeSelect">📊 Chọn vùng ô cần sao chép:</label>
-                <select id="rangeSelect" class="range-select" required>
-                    <option value="D4:E63">TKB cho Lịch Báo Giảng</option>
-                    <option value="C6:M51">TKB cho Sổ Đầu Bài</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="outputName">💾 Tên file xuất ra:</label>
-                <input type="text" id="outputName" placeholder="Nhập tên file (không cần đuôi .xlsx)" value="" required>
-            </div>
-
-            <div class="form-group">
-                <button type="submit" class="submit-btn" id="submitBtn">
-                    <span class="icon">🚀</span>
-                    Xử Lý và Tải File
-                </button>
-            </div>
-        </form>
-
-        <div class="progress-bar" id="progressBar">
-            <div class="progress-fill" id="progressFill"></div>
+      <form id="excelForm">
+        <div class="form-group">
+          <label for="inputFile">📁 Chọn file Excel (.xlsx):</label>
+          <div class="file-input-wrapper">
+            <input
+              type="file"
+              id="inputFile"
+              class="file-input"
+              accept=".xlsx,.xls"
+              required
+            />
+            <label for="inputFile" class="file-input-label">
+              <span class="icon">📁</span>
+              Chọn file Excel
+            </label>
+          </div>
+          <div class="file-name" id="inputFileName">Chưa chọn file</div>
         </div>
 
-        <div class="status" id="status"></div>
+        <div class="form-group">
+          <label for="rangeSelect">📊 Chọn vùng ô cần sao chép:</label>
+          <select id="rangeSelect" class="range-select" required>
+            <option value="D4:E63">TKB cho Lịch Báo Giảng</option>
+            <option value="C6:M51">TKB cho Sổ Đầu Bài</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="weekLimit">📅 Giới hạn tuần (tùy chọn):</label>
+          <input
+            type="number"
+            id="weekLimit"
+            class="range-select"
+            min="1"
+            placeholder="Để trống để xử lý tất cả các tuần"
+          />
+          <small style="display: block; margin-top: 5px; color: #666"
+            >Ví dụ: Nhập 7 để chỉ xử lý đến tuần 7</small
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="outputName">💾 Tên file xuất ra:</label>
+          <input
+            type="text"
+            id="outputName"
+            placeholder="Nhập tên file (không cần đuôi .xlsx)"
+            value=""
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <span class="icon">🚀</span>
+            Xử Lý và Tải File
+          </button>
+        </div>
+      </form>
+
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="status" id="status"></div>
     </div>
 
-
-
     <script>
-        // Xử lý hiển thị tên file
-        document.getElementById('inputFile').addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : 'Chưa chọn file';
-            document.getElementById('inputFileName').textContent = fileName;
+      // Xử lý hiển thị tên file
+      document
+        .getElementById("inputFile")
+        .addEventListener("change", function (e) {
+          const fileName = e.target.files[0]
+            ? e.target.files[0].name
+            : "Chưa chọn file";
+          document.getElementById("inputFileName").textContent = fileName;
         });
 
-        // Xử lý form submit
-        document.getElementById('excelForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const inputFile = document.getElementById('inputFile').files[0];
-            const outputName = document.getElementById('outputName').value.trim();
-            const selectedRange = document.getElementById('rangeSelect').value;
-            
-            if (!inputFile || !outputName) {
-                showStatus('Vui lòng chọn file và nhập tên file xuất ra!', 'error');
-                return;
+      // Xử lý form submit
+      document
+        .getElementById("excelForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const inputFile = document.getElementById("inputFile").files[0];
+          const outputName = document.getElementById("outputName").value.trim();
+          const selectedRange = document.getElementById("rangeSelect").value;
+
+          if (!inputFile || !outputName) {
+            showStatus("Vui lòng chọn file và nhập tên file xuất ra!", "error");
+            return;
+          }
+
+          try {
+            showStatus("Đang xử lý file...", "processing");
+            showProgress(0);
+
+            // Đọc file Excel
+            const workbook = await readExcelFile(inputFile);
+            showProgress(30);
+
+            // Kiểm tra số lượng trang tính
+            if (workbook.worksheets.length < 3) {
+              throw new Error("File phải có ít nhất 3 trang tính");
             }
 
-            try {
-                showStatus('Đang xử lý file...', 'processing');
-                showProgress(0);
-                
-                // Đọc file Excel
-                const workbook = await readExcelFile(inputFile);
-                showProgress(30);
-                
-                // Kiểm tra số lượng trang tính
-                if (workbook.worksheets.length < 3) {
-                    throw new Error('File phải có ít nhất 3 trang tính');
-                }
-                
-                // Sao chép nội dung với vùng đã chọn
-                await copySheetContent(workbook, selectedRange);
-                showProgress(80);
-                
-                // Tạo và tải file
-                await downloadExcelFile(workbook, outputName);
-                showProgress(100);
-                
-                showStatus('✅ Xử lý hoàn thành! File đã được tải xuống.', 'success');
-                
-            } catch (error) {
-                console.error('Lỗi:', error);
-                showStatus('❌ Có lỗi xảy ra: ' + error.message, 'error');
-            }
+            // Sao chép nội dung với vùng đã chọn
+            await copySheetContent(workbook, selectedRange);
+            showProgress(80);
+
+            // Tạo và tải file
+            await downloadExcelFile(workbook, outputName);
+            showProgress(100);
+
+            showStatus(
+              "✅ Xử lý hoàn thành! File đã được tải xuống.",
+              "success"
+            );
+          } catch (error) {
+            console.error("Lỗi:", error);
+            showStatus("❌ Có lỗi xảy ra: " + error.message, "error");
+          }
         });
 
-        function showStatus(message, type) {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.className = `status ${type}`;
-            status.style.display = 'block';
-            
-            if (type === 'processing') {
-                document.getElementById('progressBar').style.display = 'block';
-            } else {
-                setTimeout(() => {
-                    document.getElementById('progressBar').style.display = 'none';
-                }, 1000);
-            }
+      function showStatus(message, type) {
+        const status = document.getElementById("status");
+        status.textContent = message;
+        status.className = `status ${type}`;
+        status.style.display = "block";
+
+        if (type === "processing") {
+          document.getElementById("progressBar").style.display = "block";
+        } else {
+          setTimeout(() => {
+            document.getElementById("progressBar").style.display = "none";
+          }, 1000);
+        }
+      }
+
+      function showProgress(percent) {
+        document.getElementById("progressFill").style.width = percent + "%";
+      }
+
+      // Đọc file Excel với ExcelJS
+      async function readExcelFile(file) {
+        const workbook = new ExcelJS.Workbook();
+        const arrayBuffer = await file.arrayBuffer();
+        await workbook.xlsx.load(arrayBuffer);
+        return workbook;
+      }
+
+      // Phân tích vùng ô
+      function parseRange(range) {
+        const [start, end] = range.split(":");
+
+        // Phân tích ô bắt đầu
+        const startMatch = start.match(/([A-Z]+)(\d+)/);
+        const startCol = startMatch[1];
+        const startRow = parseInt(startMatch[2]);
+
+        // Phân tích ô kết thúc
+        const endMatch = end.match(/([A-Z]+)(\d+)/);
+        const endCol = endMatch[1];
+        const endRow = parseInt(endMatch[2]);
+
+        return { startCol, startRow, endCol, endRow };
+      }
+
+      // Chuyển đổi chữ cái cột thành số
+      function columnToNumber(column) {
+        let result = 0;
+        for (let i = 0; i < column.length; i++) {
+          result = result * 26 + (column.charCodeAt(i) - 64);
+        }
+        return result;
+      }
+
+      // Chuyển đổi số thành chữ cái cột
+      function numberToColumn(num) {
+        let result = "";
+        while (num > 0) {
+          num--; // Adjust for 1-based indexing
+          result = String.fromCharCode(65 + (num % 26)) + result;
+          num = Math.floor(num / 26);
+        }
+        return result;
+      }
+
+      // Sao chép nội dung từ trang tính nguồn sang các trang tính sau
+      async function copySheetContent(workbook, selectedRange) {
+        const sheets = workbook.worksheets;
+
+        // Xác định sheet nguồn và sheet đích dựa trên vùng ô
+        let sourceSheetIndex;
+        let minRequiredSheets;
+        let targetStartIndex;
+
+        if (selectedRange === "D4:E63") {
+          sourceSheetIndex = 2; // Sheet thứ 3 (index 2)
+          minRequiredSheets = 3; // Cần ít nhất 3 sheet
+          targetStartIndex = 3; // Sao chép từ sheet thứ 4 trở đi
+        } else if (selectedRange === "C6:M51") {
+          sourceSheetIndex = 1; // Sheet thứ 2 (index 1)
+          minRequiredSheets = 2; // Cần ít nhất 2 sheet
+          targetStartIndex = 2; // Sao chép từ sheet thứ 3 trở đi
+        } else {
+          throw new Error("Vùng ô không được hỗ trợ");
         }
 
-        function showProgress(percent) {
-            document.getElementById('progressFill').style.width = percent + '%';
+        if (sheets.length < minRequiredSheets) {
+          throw new Error(
+            `File phải có ít nhất ${minRequiredSheets} trang tính`
+          );
         }
 
-        // Đọc file Excel với ExcelJS
-        async function readExcelFile(file) {
-            const workbook = new ExcelJS.Workbook();
-            const arrayBuffer = await file.arrayBuffer();
-            await workbook.xlsx.load(arrayBuffer);
-            return workbook;
-        }
+        // Lấy trang tính nguồn
+        const sourceSheet = sheets[sourceSheetIndex];
+        console.log(
+          `Trang tính nguồn: ${sourceSheet.name} (sheet thứ ${
+            sourceSheetIndex + 1
+          })`
+        );
+        console.log(`Vùng sao chép: ${selectedRange}`);
 
         // Phân tích vùng ô
-        function parseRange(range) {
-            const [start, end] = range.split(':');
-            
-            // Phân tích ô bắt đầu
-            const startMatch = start.match(/([A-Z]+)(\d+)/);
-            const startCol = startMatch[1];
-            const startRow = parseInt(startMatch[2]);
-            
-            // Phân tích ô kết thúc
-            const endMatch = end.match(/([A-Z]+)(\d+)/);
-            const endCol = endMatch[1];
-            const endRow = parseInt(endMatch[2]);
-            
-            return { startCol, startRow, endCol, endRow };
+        const { startCol, startRow, endCol, endRow } =
+          parseRange(selectedRange);
+        const startColNum = columnToNumber(startCol);
+        const endColNum = columnToNumber(endCol);
+
+        // Lưu trữ dữ liệu và định dạng từ vùng đã chọn
+        const sourceData = [];
+
+        // Đọc dữ liệu từ vùng đã chọn
+        for (let row = startRow; row <= endRow; row++) {
+          const rowData = {};
+          for (let colNum = startColNum; colNum <= endColNum; colNum++) {
+            const colLetter = numberToColumn(colNum);
+            const cellAddress = `${colLetter}${row}`;
+
+            rowData[colLetter] = {
+              value: sourceSheet.getCell(cellAddress).value,
+              style: Object.assign({}, sourceSheet.getCell(cellAddress).style),
+            };
+          }
+          sourceData.push(rowData);
         }
 
-        // Chuyển đổi chữ cái cột thành số
-        function columnToNumber(column) {
-            let result = 0;
-            for (let i = 0; i < column.length; i++) {
-                result = result * 26 + (column.charCodeAt(i) - 64);
-            }
-            return result;
+        console.log(`Đã đọc ${sourceData.length} dòng từ trang tính nguồn`);
+
+        const weekLimit = document.getElementById("weekLimit").value;
+        let maxSheetIndex;
+
+        if (weekLimit) {
+          // Nếu có giới hạn tuần
+          // Ví dụ: weekLimit = 7, targetStartIndex = 3
+          // Thì maxSheetIndex = 3 + 7 - 1 = 9 (sheet thứ 10, tức tuần 7)
+          // Nhưng cần trừ đi 1 nữa vì targetStartIndex đã là tuần 1
+          maxSheetIndex = targetStartIndex + parseInt(weekLimit) - 1;
+        } else {
+          // Nếu không có giới hạn thì xử lý hết
+          maxSheetIndex = sheets.length - 1;
         }
 
-        // Chuyển đổi số thành chữ cái cột
-        function numberToColumn(num) {
-            let result = '';
-            while (num > 0) {
-                num--; // Adjust for 1-based indexing
-                result = String.fromCharCode(65 + (num % 26)) + result;
-                num = Math.floor(num / 26);
+        // Sao chép sang các trang tính đích
+        let copiedSheets = 0;
+        for (
+          let i = targetStartIndex;
+          i < maxSheetIndex && i < sheets.length;
+          i++
+        ) {
+          const targetSheet = sheets[i];
+          console.log(`Đang sao chép sang trang tính: ${targetSheet.name}`);
+
+          // Dán dữ liệu vào vùng tương ứng
+          for (let rowIndex = 0; rowIndex < sourceData.length; rowIndex++) {
+            const targetRow = rowIndex + startRow;
+            const rowData = sourceData[rowIndex];
+
+            // Sao chép từng ô trong dòng
+            for (let colNum = startColNum; colNum <= endColNum; colNum++) {
+              const colLetter = numberToColumn(colNum);
+              const cellAddress = `${colLetter}${targetRow}`;
+
+              const targetCell = targetSheet.getCell(cellAddress);
+              targetCell.value = rowData[colLetter].value;
+              targetCell.style = rowData[colLetter].style;
             }
-            return result;
+          }
+
+          copiedSheets++;
         }
 
-        // Sao chép nội dung từ trang tính nguồn sang các trang tính sau
-        async function copySheetContent(workbook, selectedRange) {
-            const sheets = workbook.worksheets;
-            
-            // Xác định sheet nguồn và sheet đích dựa trên vùng ô
-            let sourceSheetIndex;
-            let minRequiredSheets;
-            let targetStartIndex;
-            
-            if (selectedRange === 'D4:E63') {
-                sourceSheetIndex = 2; // Sheet thứ 3 (index 2)
-                minRequiredSheets = 3; // Cần ít nhất 3 sheet
-                targetStartIndex = 3; // Sao chép từ sheet thứ 4 trở đi
-            } else if (selectedRange === 'C6:M51') {
-                sourceSheetIndex = 1; // Sheet thứ 2 (index 1)
-                minRequiredSheets = 2; // Cần ít nhất 2 sheet
-                targetStartIndex = 2; // Sao chép từ sheet thứ 3 trở đi
-            } else {
-                throw new Error('Vùng ô không được hỗ trợ');
-            }
-            
-            if (sheets.length < minRequiredSheets) {
-                throw new Error(`File phải có ít nhất ${minRequiredSheets} trang tính`);
-            }
-            
-            // Lấy trang tính nguồn
-            const sourceSheet = sheets[sourceSheetIndex];
-            console.log(`Trang tính nguồn: ${sourceSheet.name} (sheet thứ ${sourceSheetIndex + 1})`);
-            console.log(`Vùng sao chép: ${selectedRange}`);
-            
-            // Phân tích vùng ô
-            const { startCol, startRow, endCol, endRow } = parseRange(selectedRange);
-            const startColNum = columnToNumber(startCol);
-            const endColNum = columnToNumber(endCol);
-            
-            // Lưu trữ dữ liệu và định dạng từ vùng đã chọn
-            const sourceData = [];
-            
-            // Đọc dữ liệu từ vùng đã chọn
-            for (let row = startRow; row <= endRow; row++) {
-                const rowData = {};
-                for (let colNum = startColNum; colNum <= endColNum; colNum++) {
-                    const colLetter = numberToColumn(colNum);
-                    const cellAddress = `${colLetter}${row}`;
-                    
-                    rowData[colLetter] = {
-                        value: sourceSheet.getCell(cellAddress).value,
-                        style: Object.assign({}, sourceSheet.getCell(cellAddress).style)
-                    };
-                }
-                sourceData.push(rowData);
-            }
-            
-            console.log(`Đã đọc ${sourceData.length} dòng từ trang tính nguồn`);
-            
-            // Sao chép sang các trang tính đích
-            let copiedSheets = 0;
-            for (let i = targetStartIndex; i < sheets.length; i++) {
-                const targetSheet = sheets[i];
-                console.log(`Đang sao chép sang trang tính: ${targetSheet.name}`);
-                
-                // Dán dữ liệu vào vùng tương ứng
-                for (let rowIndex = 0; rowIndex < sourceData.length; rowIndex++) {
-                    const targetRow = rowIndex + startRow;
-                    const rowData = sourceData[rowIndex];
-                    
-                    // Sao chép từng ô trong dòng
-                    for (let colNum = startColNum; colNum <= endColNum; colNum++) {
-                        const colLetter = numberToColumn(colNum);
-                        const cellAddress = `${colLetter}${targetRow}`;
-                        
-                        const targetCell = targetSheet.getCell(cellAddress);
-                        targetCell.value = rowData[colLetter].value;
-                        targetCell.style = rowData[colLetter].style;
-                    }
-                }
-                
-                copiedSheets++;
-            }
-            
-            console.log(`Đã sao chép thành công sang ${copiedSheets} trang tính`);
-            
-            // Cập nhật progress
-            showProgress(70);
-            
-            if (copiedSheets === 0) {
-                const minSheetsNeeded = targetStartIndex + 1;
-                throw new Error(`Không có trang tính nào để sao chép (cần ít nhất ${minSheetsNeeded} trang tính)`);
-            }
-        }
+        console.log(`Đã sao chép thành công sang ${copiedSheets} trang tính`);
 
-        // Tạo và tải file Excel
-        async function downloadExcelFile(workbook, fileName) {
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { 
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-            });
-            
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName.endsWith('.xlsx') ? fileName : fileName + '.xlsx';
-            a.style.display = 'none';
-            
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        // Cập nhật progress
+        showProgress(70);
+
+        if (copiedSheets === 0) {
+          const minSheetsNeeded = weekLimit
+            ? targetStartIndex + parseInt(weekLimit)
+            : targetStartIndex + 1;
+          throw new Error(
+            `Không có trang tính nào để sao chép (cần ít nhất ${minSheetsNeeded} trang tính, hiện có ${sheets.length})`
+          );
         }
+      }
+
+      // Tạo và tải file Excel
+      async function downloadExcelFile(workbook, fileName) {
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName.endsWith(".xlsx") ? fileName : fileName + ".xlsx";
+        a.style.display = "none";
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     </script>
-</body>
+  </body>
 </html>
